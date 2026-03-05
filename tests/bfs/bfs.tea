@@ -1,0 +1,124 @@
+use std;
+
+fn quickread() -> i32 {
+	let ch:i32 = std::getch();
+	let x:i32 = 0;
+	let f:i32 = 0;
+	while (ch < 48) || (ch > 57) {
+		if ch == 45 {
+			f = 1;
+		} 
+		ch = std::getch();
+	}
+	while (ch >= 48) && (ch <=57) {
+		x = x * 10 + ch - 48;
+		ch = std::getch();
+	}
+	if f != 0 {
+		return 0-x;
+	} else {
+		return x;
+	}
+}
+
+let n:i32;
+let m:i32;
+let to: [i32; 5005];
+let next: [i32; 5005];
+let head: [i32; 1005];
+let cnt:i32 = 0;
+let que: [i32; 1005];
+let h:i32;
+let tail:i32;
+let inq: [i32; 1005];
+
+fn addedge(from:i32, To:i32) {
+	to[cnt] = To;
+	next[cnt] = head[from];
+	head[from] = cnt;
+	cnt = cnt + 1;
+	to[cnt] = from;
+	next[cnt] = head[To];
+	head[To] = cnt;
+	cnt = cnt + 1;
+}
+
+fn init() {
+	let i:i32 = 0;
+	while i < 1005 {
+		head[i] = -1;
+		i = i + 1;
+	}
+}
+
+fn inqueue(x:i32) {
+	inq[x] = 1;
+	tail = tail + 1;
+	que[tail] = x;
+}
+
+fn popqueue() -> i32 {
+	h = h + 1;
+	let res:i32 = que[h];
+	return que[h];
+}
+
+fn same(s:i32, t:i32) -> i32 {
+	h = 0;
+	tail = 0;
+	inqueue(s);
+	let res:i32 = 0;
+	let x:i32 = 0;
+	let i:i32 = 0;
+	let temp:i32 = 0;
+	while h < tail {
+		x = popqueue();
+		if x == t {
+			res = 1;
+		}
+		i = head[x];
+		while i != -1 {
+			temp = to[i];
+			if inq[temp] == 0 {
+				inqueue(to[i]);
+			}
+			i = next[i];
+		}
+	}
+	i = 0;
+	while i <= tail {
+		temp = que[i];
+		inq[temp] = 0;
+		i = i + 1;
+	}
+	return res;
+}
+
+fn main() -> i32 {
+	n = quickread();
+	m = quickread();
+	std::timer_start(97);
+	init();
+	let ch:i32 = 0;
+	let x:i32 = 0;
+	let y:i32 = 0;
+	while m != 0 {
+		ch = std::getch();
+		while (ch != 81) && (ch != 85) {
+			ch = std::getch();
+		}
+		if ch == 81 {
+			x = quickread();
+			y = quickread();
+			std::putint(same(x, y));
+			std::putch(10);
+		} else {
+			x = quickread();
+			y = quickread();
+			addedge(x, y);
+		}
+		m = m - 1;
+	}
+	std::timer_stop(117);
+	return 0;
+}

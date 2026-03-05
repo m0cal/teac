@@ -1,0 +1,22 @@
+use std::rc::Rc;
+
+pub type Pos = usize;
+
+#[derive(Debug, Clone)]
+pub enum BuiltIn {
+    Int,
+}
+
+#[derive(Debug, Clone)]
+pub enum TypeSpecifierInner {
+    BuiltIn(BuiltIn),
+    Composite(String),
+}
+
+#[derive(Debug, Clone)]
+pub struct TypeSpecifier {
+    pub pos: Pos,
+    pub inner: TypeSpecifierInner,
+}
+
+pub type SharedTypeSpec = Rc<Option<TypeSpecifier>>;

@@ -1,0 +1,168 @@
+use std;
+
+struct my_struct_1{
+  array: [i32; 7]
+}
+struct my_struct_2{
+  array: [my_struct_1; 8]
+}
+struct my_struct_3{
+  array: [my_struct_2; 5]
+}
+struct my_struct_4{
+  array: [my_struct_3; 4]
+}
+struct my_struct_5{
+  array: [my_struct_4; 3]
+}
+struct my_struct_6{
+  array: [my_struct_5; 2]
+}
+
+
+let arr1: [my_struct_6; 10];
+let arr2: [my_struct_6; 10];
+
+fn loop1(x:i32, y:i32) -> i32 {
+  let  a:i32;
+  let  b:i32;
+  let  c:i32;
+  let  d:i32;
+  let  e:i32;
+  let  f:i32;
+  let  g:i32;
+  a = 0;
+  while (a < x) && (a < y) {
+    b = 0;
+    while b < 2 {
+      c = 0;
+      while c < 3 {
+        d = 0;
+        while d < 4 {
+          e = 0;
+          while e < 5 {
+            f = 0;
+            while f < 6 {
+              g = 0;
+              while g < 2 {
+                arr1[a].array[b].array[c].array[d].array[e].array[f].array[g] = a + b + c + d + e + f + g + x + y;
+                g = g + 1;
+              }
+              f = f + 1;
+            }
+            e = e + 1;
+          }
+          d = d + 1;
+        }
+        c = c + 1;
+      }
+      b = b + 1;
+    }
+    a = a + 1;
+  }
+}
+
+fn loop2() -> i32 {
+  let  a:i32;
+  let  b:i32;
+  let  c:i32;
+  let  d:i32;
+  let  e:i32;
+  let  f:i32;
+  let  g:i32;
+  a = 0;
+  while a < 10 {
+    b = 0;
+    while b < 2 {
+      c = 0;
+      while c < 3 {
+        d = 0;
+        while d < 2 {
+          e = 0;
+          while e < 4 {
+            f = 0;
+            while f < 8 {
+              g = 0;
+              while g < 7 {
+                arr2[a].array[b].array[c].array[d].array[e].array[f].array[g] = a + b + d + g;
+                g = g + 1;
+              }
+              f = f + 1;
+            }
+            e = e + 1;
+          }
+          d = d + 1;
+        }
+        c = c + 1;
+      }
+      b = b + 1;
+    }
+    a = a + 1;
+  }
+}
+
+fn loop3( h:i32,  i:i32,  j:i32,  k:i32, l:i32,  m:i32,  n:i32) -> i32 {
+  let  a:i32;
+  let  b:i32;
+  let  c:i32;
+  let  d:i32;
+  let  e:i32;
+  let  f:i32;
+  let  g:i32;
+  let  ans:i32 = 0;
+  a = 0;
+  while a < 10 {
+    b = 0;
+    while b < 100 {
+      c = 0;
+      while c < 1000 {
+        d = 0;
+        while d < 10000 {
+          e = 0;
+          while e < 100000 {
+            f = 0;
+            while f < 1000000 {
+              g = 0;
+              while g < 10000000 {
+                ans = ans-(ans/ 817)*817 + arr1[a].array[b].array[c].array[d].array[e].array[f].array[g] + arr2[a].array[b].array[c].array[d].array[e].array[f].array[g];
+                g = g + 1;
+                if g >= n {break;}
+              }
+              f = f + 1;
+              if f >= m {break;}
+            }
+            e = e + 1;
+            if e >= l {break;}
+          }
+          d = d + 1;
+          if d >= k {break;}
+        }
+        c = c + 1;
+        if c >= j {break;}
+      }
+      b = b + 1;
+      if b >= i {break;}
+    }
+    a = a + 1;
+    if a >= h {break;}
+  }
+  return ans;
+}
+
+fn main() -> i32 {
+  std::timer_start(97);
+  let x:i32 = std::getint();
+  let y:i32 = std::getint();
+  let h:i32 = std::getint();
+  let i:i32 = std::getint();
+  let j:i32 = std::getint();
+  let k:i32 = std::getint();
+  let l:i32 = std::getint();
+  let m:i32 = std::getint();
+  let n:i32 = std::getint();
+  loop1(x, y);
+  loop2();
+  n = loop3(h, i, j, k, l, m, n);
+  std::timer_stop(117);
+  return n;
+}

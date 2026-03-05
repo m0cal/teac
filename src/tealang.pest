@@ -1,0 +1,412 @@
+// Pest grammar for TeaLang programming language
+
+// Whitespace: spaces, tabs, newlines, and carriage returns (automatically skipped)
+// Example: "let x = 5;" contains spaces around the assignment operator
+WHITESPACE = _{ " " | "\t" | "\n" | "\r" }
+
+// Comments: single-line and multi-line comments (automatically skipped)
+COMMENT = _{
+    line_comment
+    | block_comment
+}
+
+// Single-line comment: from "//" to end of line
+// Example: "// This is a comment"
+line_comment = { "//" ~ (!("\n" | "\r") ~ ANY)* }
+
+// Multi-line comment: from "/*" to "*/"
+// Example: "/* This is a multi-line comment */"
+block_comment = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+
+// Keywords (using @ for atomic rules to prevent whitespace inside)
+// Example: "let x:i32 = 0;"
+kw_let = @{ "let" ~ !ASCII_ALPHANUMERIC }
+// Example: "fn main() -> i32 { }"
+kw_fn = @{ "fn" ~ !ASCII_ALPHANUMERIC }
+// Example: "struct Node { value:i32, next:i32 }"
+kw_struct = @{ "struct" ~ !ASCII_ALPHANUMERIC }
+// Example: "if x > 0 { }"
+kw_if = @{ "if" ~ !ASCII_ALPHANUMERIC }
+// Example: "if x > 0 { } else { }"
+kw_else = @{ "else" ~ !ASCII_ALPHANUMERIC }
+// Example: "while i < 10 { i = i + 1; }"
+kw_while = @{ "while" ~ !ASCII_ALPHANUMERIC }
+// Example: "while 1 > 0 { if done { break; } }"
+kw_break = @{ "break" ~ !ASCII_ALPHANUMERIC }
+// Example: "while i < n { if inq[temp] == 0 { continue; } i = i + 1; }"
+kw_continue = @{ "continue" ~ !ASCII_ALPHANUMERIC }
+// Example: "return 0;" or "return sum;"
+kw_return = @{ "return" ~ !ASCII_ALPHANUMERIC }
+// Example: "let count:i32 = 0;"
+kw_int = @{ "i32" ~ !ASCII_ALPHANUMERIC }
+// Example: "use std;"
+kw_use = @{ "use" ~ !ASCII_ALPHANUMERIC }
+
+// Operators
+// Example: "fn main() -> i32 { return 0; }"
+op_arrow = { "->" }
+// Example: "if ch <= 57 { }"
+op_le = { "<=" }
+// Example: "if ch >= 48 { }"
+op_ge = { ">=" }
+// Example: "if x == 1 { }"
+op_eq = { "==" }
+// Example: "if i != -1 { }"
+op_ne = { "!=" }
+// Example: "if (x >= 48) && (x <= 57) { }"
+op_and = { "&&" }
+// Example: "if (ch < 48) || (ch > 57) { }"
+op_or = { "||" }
+// Example: "x = x + 1;"
+op_add = { "+" }
+// Example: "x = n - 1;"
+op_sub = { "-" }
+// Example: "x = x * 10;"
+op_mul = { "*" }
+// Example: "num = num / base;"
+op_div = { "/" }
+// Example: "let sum:i32 = 0;"
+op_assign = { "=" }
+// Example: "if !done { continue; }"
+op_not = { "!" }
+// Example: "if i < n { }"
+op_lt = { "<" }
+// Example: "if a[i] > max { max = a[i]; }"
+op_gt = { ">" }
+
+// Delimiters
+// Example: "fn move(x:i32, y:i32) { }"
+lparen = { "(" }
+// Example: "fn move(x:i32, y:i32) { }"
+rparen = { ")" }
+// Example: "fn main() { let x:i32 = 0; }"
+lbrace = { "{" }
+// Example: "fn main() { let x:i32 = 0; }"
+rbrace = { "}" }
+// Example: "let arr: [i32; 100];"
+lbracket = { "[" }
+// Example: "let arr: [i32; 100];"
+rbracket = { "]" }
+// Example: "fn add(x:i32, y:i32) -> i32 { }"
+comma = { "," }
+// Example: "let x:i32 = 0;"
+semicolon = { ";" }
+// Example: "let count:i32 = 0;"
+colon = { ":" }
+// Example: "tail[i].next = head;"
+dot = { "." }
+// Example: "std::getint()"
+double_colon = { "::" }
+// Example: "&[i32]" in function parameters
+ampersand = { "&" }
+
+// Literals and identifiers
+// Numeric literal: zero or a non-zero digit followed by any digits
+// Examples: "0", "1", "10", "48", "57", "1005"
+num = @{
+    "0"
+    | (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*)
+}
+
+// Identifier: starts with letter or underscore, followed by letters, digits, or underscores
+// Cannot be a keyword (enforced by negative lookaheads)
+// Examples: "x", "count", "my_getint", "quickread", "arr", "head", "tail", "inq"
+identifier = @{
+    !kw_let ~ !kw_fn ~ !kw_struct ~ !kw_if ~ !kw_else ~ !kw_while ~ 
+    !kw_break ~ !kw_continue ~ !kw_return ~ !kw_int ~ !kw_use ~
+    (ASCII_ALPHA | "_") ~ (ASCII_ALPHA | ASCII_DIGIT | "_")*
+}
+
+// Types
+// Type specification: integer type or user-defined type
+// Examples: "i32", "Node", "Queue"
+type_spec = {
+    kw_int
+    | identifier
+}
+
+// Program structure
+// A complete TeaLang program: optional use statements, followed by program elements
+// Example: "use std; let n:i32; fn main() -> i32 { return 0; }"
+program = {
+    SOI ~ use_stmt* ~ program_element* ~ EOI
+}
+
+// Use statement
+// Import a module (typically 'std' for standard library)
+// Example: "use std;"
+use_stmt = {
+    kw_use ~ identifier ~ semicolon
+}
+
+// Program element: variable declaration, struct definition, function declaration or definition
+// Examples: "let n:i32;", "struct Node { val:i32 }", "fn main() -> i32 { return 0; }"
+program_element = {
+    var_decl_stmt
+    | struct_def
+    | fn_decl_stmt
+    | fn_def
+}
+
+// Struct definition
+// Define a structure with named fields
+// Example: "struct Node { value:i32, next:i32 }"
+struct_def = {
+    kw_struct ~ identifier ~ lbrace ~ var_decl_list ~ rbrace
+}
+
+// Variable declarations
+// List of variable declarations separated by commas
+// Example: "x:i32, y:i32, z:i32"
+var_decl_list = {
+    var_decl ~ (comma ~ var_decl)*
+}
+
+// Variable declaration: can be array or scalar, with or without type annotation
+// Examples: "n:i32", "arr: [i32; 100]", "que[1005]", "count", "input: &[i32]"
+var_decl = {
+    identifier ~ colon ~ ampersand ~ lbracket ~ type_spec ~ rbracket  // slice type: &[T] (pointer to first element)
+    | identifier ~ colon ~ lbracket ~ type_spec ~ semicolon ~ num ~ rbracket  // array with type (Rust style)
+    | identifier ~ colon ~ type_spec  // scalar with type
+    | identifier ~ lbracket ~ num ~ rbracket  // array without type
+    | identifier  // scalar without type
+}
+
+// Variable declaration statement: declare and optionally initialize a variable
+// Examples: "let n:i32;", "let x:i32 = 0;", "let arr: [i32; 100] = {0, 1, 2};"
+var_decl_stmt = {
+    kw_let ~ var_def ~ semicolon
+    | kw_let ~ var_decl ~ semicolon
+}
+
+// Variable definition with initialization
+// Examples: "let x:i32 = 0;", "let arr: [i32; 3] = {1, 2, 3};"
+var_def = {
+    identifier ~ colon ~ lbracket ~ type_spec ~ semicolon ~ num ~ rbracket ~ op_assign ~ lbrace ~ right_val_list ~ rbrace  // array with type (Rust style)
+    | identifier ~ colon ~ type_spec ~ op_assign ~ right_val  // scalar with type
+    | identifier ~ lbracket ~ num ~ rbracket ~ op_assign ~ lbrace ~ right_val_list ~ rbrace  // array without type
+    | identifier ~ op_assign ~ right_val  // scalar without type
+}
+
+// Function declarations and definitions
+// Function declaration statement: declare a function without implementation
+// Example: "fn quickread() -> i32;"
+fn_decl_stmt = {
+    fn_decl ~ semicolon
+}
+
+// Function declaration: signature with optional return type
+// Examples: "fn main() -> i32", "fn move(x:i32, y:i32)", "fn init()"
+fn_decl = {
+    kw_fn ~ identifier ~ lparen ~ param_decl? ~ rparen ~ op_arrow ~ type_spec
+    | kw_fn ~ identifier ~ lparen ~ param_decl? ~ rparen
+}
+
+// Parameter declaration: list of parameter variables
+// Example: "x:i32, y:i32" in "fn add(x:i32, y:i32) -> i32 { }"
+param_decl = {
+    var_decl_list
+}
+
+// Function definition: declaration with implementation
+// Example: "fn main() -> i32 { let x:i32 = 0; return x; }"
+fn_def = {
+    fn_decl ~ lbrace ~ code_block_stmt* ~ rbrace
+}
+
+// Statements
+// Code block statement: any statement that can appear in a function body
+// Examples: "let i:i32 = 0;", "x = x + 1;", "std::putint(n);", "if x > 0 { }", "while i < n { }"
+code_block_stmt = {
+    var_decl_stmt
+    | assignment_stmt
+    | call_stmt
+    | if_stmt
+    | while_stmt
+    | return_stmt
+    | continue_stmt
+    | break_stmt
+    | null_stmt
+}
+
+// Assignment statement: assign a value to a variable, array element, or struct field
+// Examples: "x = 5;", "arr[i] = 10;", "node.value = x;"
+assignment_stmt = {
+    left_val ~ op_assign ~ right_val ~ semicolon
+}
+
+// Call statement: function call as a statement (result discarded)
+// Examples: "init();", "std::putch(10);", "addedge(x, y);"
+call_stmt = {
+    fn_call ~ semicolon
+}
+
+// Return statement: return from a function with or without a value
+// Examples: "return 0;", "return x + y;", "return;"
+return_stmt = {
+    kw_return ~ right_val ~ semicolon
+    | kw_return ~ semicolon
+}
+
+// If statement: conditional branching with optional else clause
+// Examples: "if x > 0 { return x; }", "if ch == 45 { f = 1; } else { f = 0; }"
+if_stmt = {
+    kw_if ~ bool_expr ~ lbrace ~ code_block_stmt* ~ rbrace ~ kw_else ~ lbrace ~ code_block_stmt* ~ rbrace
+    | kw_if ~ bool_expr ~ lbrace ~ code_block_stmt* ~ rbrace
+}
+
+// While statement: loop with a boolean condition
+// Examples: "while i < n { i = i + 1; }", "while (ch >= 48) && (ch <= 57) { }"
+while_stmt = {
+    kw_while ~ bool_expr ~ lbrace ~ code_block_stmt* ~ rbrace
+}
+
+// Break statement: exit from a loop
+// Example: "while 1 > 0 { if done { break; } }"
+break_stmt = {
+    kw_break ~ semicolon
+}
+
+// Continue statement: skip to next iteration of a loop
+// Example: "while 1 > 0 { c = std::getch() - ascii_0; if (c < 0) || (c > 9) { continue; } }"
+continue_stmt = {
+    kw_continue ~ semicolon
+}
+
+// Null statement: empty statement (just a semicolon)
+// Example: ";" (used for empty loop bodies or as placeholder)
+null_stmt = {
+    semicolon
+}
+
+// Expressions
+// Right value: a value that can appear on the right side of assignment
+// Can be a boolean expression or arithmetic expression
+// Examples: "x + 1", "x > 0", "(a && b) || c"
+right_val = {
+    bool_expr
+    | arith_expr
+}
+
+// Right value list: comma-separated list of values
+// Example: "0, 1, 2" in "let arr: [i32; 3] = {0, 1, 2};"
+right_val_list = {
+    right_val ~ (comma ~ right_val)*
+}
+
+// Boolean expressions with precedence
+// Boolean OR has lowest precedence, connecting AND terms
+// Example: "(ch < 48) || (ch > 57)" in "while (ch < 48) || (ch > 57) { }"
+bool_expr = {
+    bool_and_term ~ (op_or ~ bool_and_term)*
+}
+
+// Boolean AND term: connects boolean units with AND operator
+// Example: "(ch >= 48) && (ch <= 57)" in "while (ch >= 48) && (ch <= 57) { }"
+bool_and_term = {
+    bool_unit_atom ~ (op_and ~ bool_unit_atom)*
+}
+
+// Boolean unit atom: basic boolean expression (comparison, negation, or parenthesized)
+// Examples: "x > 0", "!done", "(a == b)"
+bool_unit_atom = {
+    bool_unit_paren
+    | bool_comparison
+    | op_not ~ bool_unit_atom
+}
+
+// Parenthesized boolean expression or comparison
+// Examples: "(x > 0)", "(ch >= 48)"
+bool_unit_paren = {
+    lparen ~ bool_expr ~ rparen
+    | lparen ~ expr_unit ~ comp_op ~ expr_unit ~ rparen
+}
+
+// Boolean comparison: compare two expressions
+// Examples: "x == 1", "i < n", "arr[i] > max"
+bool_comparison = {
+    expr_unit ~ comp_op ~ expr_unit
+}
+
+// Comparison operators
+// Examples: "<=", ">=", "==", "!=", "<", ">"
+comp_op = {
+    op_le | op_ge | op_eq | op_ne | op_lt | op_gt
+}
+
+// Arithmetic expressions with precedence
+// Arithmetic expression: addition and subtraction (lower precedence)
+// Examples: "x + 1", "n - 1", "x * 10 + ch - 48"
+arith_expr = {
+    arith_term ~ (arith_add_op ~ arith_term)*
+}
+
+// Arithmetic term: multiplication and division (higher precedence)
+// Examples: "x * 10", "num / base", "a * b / c"
+arith_term = {
+    expr_unit ~ (arith_mul_op ~ expr_unit)*
+}
+
+// Addition and subtraction operators
+// Examples: "+", "-"
+arith_add_op = { op_add | op_sub }
+// Multiplication and division operators
+// Examples: "*", "/"
+arith_mul_op = { op_mul | op_div }
+
+// Expression units (primary expressions)
+// Using postfix syntax to handle chaining: id[0].member[1]
+// Examples: "x", "10", "arr[i]", "node.value", "std::getint()", "0-x" (negative)
+expr_unit = {
+    lparen ~ arith_expr ~ rparen
+    | fn_call
+    | op_sub ~ num  // negative number
+    | num
+    | identifier ~ expr_suffix*
+}
+
+// Expression suffix: array indexing or member access (can be chained)
+// Examples: "[i]" in "arr[i]", ".value" in "node.value", "[cnt].next" in "list[cnt].next"
+expr_suffix = {
+    lbracket ~ index_expr ~ rbracket  // array indexing
+    | dot ~ identifier  // member access
+}
+
+// Index expression: numeric or variable index for array access
+// Examples: "0", "i", "cnt" in "arr[i]", "head[0]", "que[cnt]"
+index_expr = {
+    num | identifier
+}
+
+// Left values (assignable expressions) - same pattern
+// Examples: "x", "arr[i]", "node.value", "to[cnt]"
+left_val = {
+    identifier ~ left_val_suffix*
+}
+
+// Left value suffix: array indexing or member access for assignment target
+// Examples: "[i]" in "arr[i] = 0;", ".next" in "head[from] = cnt;"
+left_val_suffix = {
+    lbracket ~ index_expr ~ rbracket  // array indexing
+    | dot ~ identifier  // member access
+}
+
+// Function calls
+// Function call: either module-prefixed or local
+// Examples: "std::getint()", "quickread()", "addedge(x, y)"
+fn_call = {
+    module_prefixed_call
+    | local_call
+}
+
+// Function call with module prefix (e.g., std::getint())
+// Examples: "std::getint()", "std::putch(10)", "std::timer_start(97)"
+module_prefixed_call = {
+    identifier ~ double_colon ~ identifier ~ lparen ~ right_val_list? ~ rparen
+}
+
+// Local function call (no module prefix)
+// Examples: "quickread()", "init()", "addedge(x, y)", "same(s, t)"
+local_call = {
+    identifier ~ lparen ~ right_val_list? ~ rparen
+}

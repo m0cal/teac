@@ -1,0 +1,79 @@
+use std;
+
+let M:i32;
+let L:i32;
+let N:i32;
+
+
+fn mul( a0: &[i32], a1: &[i32],  a2: &[i32], b0: &[i32], b1: &[i32], b2: &[i32], c0: &[i32], c1: &[i32], c2: &[i32]) -> i32
+{
+    let i:i32;
+    i=0;
+    c0[0]=a0[0]*b0[0]+a0[1]*b1[0]+a0[2]*b2[0];
+    c0[1]=a0[0]*b0[1]+a0[1]*b1[1]+a0[2]*b2[1];
+    c0[2]=a0[0]*b0[2]+a0[1]*b1[2]+a0[2]*b2[2];
+    c1[0]=a1[0]*b0[0]+a1[1]*b1[0]+a1[2]*b2[0];
+    c1[1]=a1[0]*b0[1]+a1[1]*b1[1]+a1[2]*b2[1];
+    c1[2]=a1[0]*b0[2]+a1[1]*b1[2]+a1[2]*b2[2];
+    c2[0]=a2[0]*b0[0]+a2[1]*b1[0]+a2[2]*b2[0];
+    c2[1]=a2[0]*b0[1]+a2[1]*b1[1]+a2[2]*b2[1];
+    c2[2]=a2[0]*b0[2]+a2[1]*b1[2]+a2[2]*b2[2];
+
+    return 0;
+
+}
+
+fn main() -> i32
+{   
+    std::timer_start(97);
+    N=3;
+    M=3;
+    L=3;
+    let a0: [i32; 3]; let a1: [i32; 3];let  a2: [i32; 3]; 
+    let b0: [i32; 3];let b1: [i32; 3];let b2: [i32; 3]; 
+    let c0: [i32; 6];let c1: [i32; 3];let c2: [i32; 3];
+    let i:i32;
+    i=0;
+    while i<M
+    {
+        a0[i]=i;
+        a1[i]=i;
+        a2[i]=i;
+        b0[i]=i;
+        b1[i]=i;
+        b2[i]=i;
+        i=i+1;
+    }
+    i=mul( a0, a1,  a2, b0, b1, b2, c0, c1, c2);
+    let x:i32;
+    while i<N
+    {
+        x = c0[i];
+        std::putint(x);
+        i=i+1;
+    }
+    x = 10;
+    i=0;
+    std::putch(x);
+    while i<N
+    {
+        x = c1[i];
+        std::putint(x);
+       
+        i=i+1;
+    }
+    x = 10;
+    i=0;
+    std::putch(x);
+    while i<N
+    {
+        x = c2[i];
+        std::putint(x);
+       
+        i=i+1;
+    }
+    x = 10;
+    std::putch(x);
+    std::timer_stop(117);
+    return 0;
+}

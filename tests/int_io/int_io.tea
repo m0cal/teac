@@ -1,0 +1,63 @@
+use std;
+
+let ascii_0:i32 = 48;
+
+fn my_getint() -> i32
+{
+    let sum:i32 = 0;
+    let c:i32;
+    while 1>0 {
+        c = std::getch() - ascii_0;
+        if (c < 0) || (c > 9) {
+            continue;
+        } else {
+            break;
+        }
+    }
+    sum = c;
+
+    while 1>0 {
+        c = std::getch() - ascii_0;
+        if (c >= 0) && (c <= 9) {
+            sum = sum * 10 + c;
+        } else {
+            break;
+        }
+    }
+
+    return sum;
+}
+
+fn mod(x:i32,y:i32) -> i32
+{
+    return x-(x/y)*y;
+}
+
+fn my_putint(a:i32)
+{
+    let b: [i32; 16];
+    let i:i32 = 0;
+    while a > 0 {
+        b[i] = mod(a,10) + ascii_0;
+        a = a / 10;
+        i = i + 1;
+    }
+    while i > 0 {
+        i = i - 1;
+        std::putch(b[i]);
+    }
+}
+
+fn main() -> i32
+{   
+    std::timer_start(51);
+    let n:i32 = my_getint();
+    while n > 0 {
+        let m:i32 = my_getint();
+        my_putint(m);
+        std::putch(10);
+        n = n - 1;
+    }
+    std::timer_stop(58);
+    return 0;
+}

@@ -1,0 +1,52 @@
+use std;
+
+fn mod(x:i32,y:i32) -> i32
+{
+    return x-(x/y)*y;
+}
+
+fn palindrome(n:i32) -> i32
+{
+    let a: [i32; 4];
+    let j:i32;
+    let flag:i32;
+    j=0;
+    while j<4
+    {
+        a[j]=mod(n,10);
+        n=n/10;
+        j=j+1;
+    }
+
+    if (a[0]==a[3]) && (a[1]==a[2])
+	{
+		flag=1;
+	}else{
+		flag=0;
+	}
+	return flag;
+}
+
+fn main() -> i32
+{   
+    std::timer_start(30);
+    let test:i32;
+    test=1221;
+    let flag:i32;
+    flag=palindrome(test);
+    if flag==1
+    {
+        std::putint(test);
+    }
+    else
+    {
+        flag = 0;
+        std::putint(flag);
+    }
+
+    flag = 10;
+    std::putch(flag);
+    std::timer_stop(47);
+    return 0;
+    
+}

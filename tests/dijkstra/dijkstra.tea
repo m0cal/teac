@@ -1,0 +1,96 @@
+use std;
+
+let INF:i32 = 65535;
+struct array2D {
+    a: [i32; 16]
+}
+let e: [array2D; 16];
+let book: [i32; 16];
+let dis: [i32; 16];
+let n:i32;
+let m:i32;
+let v1:i32;
+let v2:i32;
+let w:i32;
+
+fn Dijkstra()
+{
+    let i:i32;
+    i = 1;
+    while i <= n {
+        dis[i] = e[1].a[i];
+        book[i] = 0;
+        i = i + 1;
+    }
+    book[1] = 1;
+
+    i = 1;
+    while i <= (n - 1) {
+        let min_num:i32 = INF;
+        let min_index:i32 = 0;
+        let k:i32 = 1;
+        while k <= n {
+            if (min_num > dis[k]) && (book[k] == 0) {
+                min_num = dis[k];
+                min_index = k;
+            }
+            k = k + 1;
+        }
+        book[min_index] = 1;
+        let j:i32 = 1;
+        while j <= n {
+            if e[min_index].a[j] < INF {
+                if dis[j] > (dis[min_index] + e[min_index].a[j]) {
+                    dis[j] = dis[min_index] + e[min_index].a[j];
+                }
+            }
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+}
+
+fn main() -> i32
+{   
+    std::timer_start(53);
+    let i:i32;
+    n = std::getint();
+    m = std::getint();
+
+    i = 1;
+    while i <= n {
+        let j:i32 = 1;
+        while j <= n {
+            if i == j
+            {
+                e[i].a[j] = 0;
+            }
+            else
+            {
+                e[i].a[j] = INF;
+            }
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+
+    i = 1;
+    while i <= m {
+        let u:i32 = std::getint();
+        let v:i32 = std::getint();
+        e[u].a[v] = std::getint();
+        i = i + 1;
+    }
+
+    Dijkstra();
+
+    i = 1;
+    while i <= n {
+        std::putint(dis[i]);
+        std::putch(32);
+        i = i + 1;
+    }
+    std::putch(10);
+    std::timer_stop(91);
+    return 0;
+}

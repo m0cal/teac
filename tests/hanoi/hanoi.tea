@@ -1,0 +1,36 @@
+use std;
+
+fn move(x:i32, y:i32)
+{
+    std::putint(x);
+    std::putch(32);
+    std::putint(y);
+    std::putch(44);
+    std::putch(32);
+}
+
+fn hanoi(n:i32, one:i32, two:i32, three:i32)
+{
+    if n == 1
+    {
+        move(one, three);
+    }
+    else {
+        hanoi(n - 1, one, three, two);
+        move(one, three);
+        hanoi(n - 1, two, one, three);
+    }
+}
+
+fn main() -> i32
+{   
+    std::timer_start(21);
+    let n:i32 = std::getint();
+    while n > 0 {
+        hanoi(std::getint(), 1, 2, 3);
+        std::putch(10);
+        n = n - 1;
+    }
+    std::timer_stop(28);
+    return 0;
+}

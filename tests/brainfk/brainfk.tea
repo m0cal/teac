@@ -1,0 +1,67 @@
+use std;
+
+let TAPE_LEN:i32 = 65536;
+let BUFFER_LEN:i32 = 32768;
+let tape: [i32; 65536];
+let program: [i32; 32768];
+let ptr:i32 = 0;
+
+fn read_program() {
+  let i:i32 = 0;
+  let len:i32 = std::getint();
+  while i < len {
+    program[i] = std::getch();
+    i = i + 1;
+  }
+  program[i] = 0;
+}
+
+fn interpret(input: &[i32]) {
+  let cur_char:i32;
+  let loop:i32;
+  let i:i32 = 0;
+  while input[i]!=0 {
+    cur_char = input[i];
+    if cur_char == 62 {
+      ptr = ptr + 1;
+    }
+    if cur_char == 60 {
+      ptr = ptr - 1;
+    }
+    if cur_char == 43 {
+      tape[ptr] = tape[ptr] + 1;
+    }
+    if cur_char == 45 {
+      tape[ptr] = tape[ptr] - 1;
+    }
+    if cur_char == 46 {
+      std::putch(tape[ptr]);
+    }
+    if cur_char == 44 {
+      tape[ptr] = std::getch();
+    }
+    if (cur_char == 93) && (tape[ptr]!=0) {
+      loop = 1;
+      while loop > 0 {
+        i = i - 1;
+        cur_char = input[i];
+        if cur_char == 91 {
+          loop = loop - 1;
+        }
+        if cur_char == 93 {
+          loop = loop + 1;
+        }
+      }
+    }
+    i = i + 1;
+  }
+}
+
+fn main() -> i32 {
+  std::timer_start(76);
+  read_program();
+  interpret(program);
+  std::putch(10);
+  std::timer_stop(80);
+  return 0;
+}
