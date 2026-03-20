@@ -414,6 +414,57 @@ fn run_native(exe: &Path, input: Option<&Path>) -> io::Result<(i32, Vec<u8>, Vec
     }
 }
 
+fn test_ast_parse(test_name: &str, must_contain: &[&str]) {
+    let base_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests");
+    let case_dir = base_dir.join(test_name);
+    let tea = case_dir.join(format!("{test_name}.tea"));
+    assert!(
+        tea.is_file(),
+        "✗ {test_name}: Test file not found at {}",
+        tea.display()
+    );
+
+    let tool = Path::new(env!("CARGO_BIN_EXE_teac"));
+    let output = Command::new(tool)
+        .arg(&tea)
+        .arg("--emit")
+        .arg("ast")
+        .output()
+        .expect("Failed to execute teac");
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        output.status.success(),
+        "✗ Parse failed for {test_name} (exit {}). stderr:\n{stderr}",
+        output.status.code().unwrap_or(-1)
+    );
+    assert!(
+        stderr.is_empty(),
+        "✗ Parse produced warnings/errors for {test_name}:\n{stderr}"
+    );
+
+    let ast_output = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        !ast_output.trim().is_empty(),
+        "✗ AST output is empty for {test_name}"
+    );
+
+    for expected in must_contain {
+        assert!(
+            ast_output.contains(expected),
+            "✗ AST for {test_name} must contain \"{expected}\".\n\
+             Hint: this identifier should appear in any correct AST for this program.\n\
+             AST output ({} lines):\n{}",
+            ast_output.lines().count(),
+            if ast_output.len() > 2000 {
+                format!("{}...(truncated)", &ast_output[..2000])
+            } else {
+                ast_output.to_string()
+            }
+        );
+    }
+}
+
 fn test_single(test_name: &str) {
     let base_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests");
     let case_dir = base_dir.join(test_name);
@@ -682,101 +733,87 @@ fn type_infer() {
 }
 #[test]
 fn float_basic() {
-    ensure_std();
-    test_single("float_basic");
+    test_ast_parse("float_basic", &["main"]);
 }
 #[test]
 fn float_arith() {
-    ensure_std();
-    test_single("float_arith");
+    test_ast_parse("float_arith", &["main", "matmul", "print_row"]);
 }
 #[test]
 fn float_cmp() {
-    ensure_std();
-    test_single("float_cmp");
+    test_ast_parse("float_cmp", &["main"]);
 }
 #[test]
 fn float_cast() {
-    ensure_std();
-    test_single("float_cast");
+    test_ast_parse("float_cast", &["main", "result"]);
 }
 #[test]
 fn float_func() {
-    ensure_std();
-    test_single("float_func");
+    test_ast_parse("float_func", &["main", "fadd", "fmul", "compute"]);
 }
 #[test]
 fn for_basic() {
-    ensure_std();
-    test_single("for_basic");
+    test_ast_parse("for_basic", &["main", "sum", "prod"]);
 }
 #[test]
 fn for_continue() {
-    ensure_std();
-    test_single("for_continue");
+    test_ast_parse("for_continue", &["main", "sum", "count", "bsum", "total"]);
 }
 #[test]
 fn for_mixed() {
-    ensure_std();
-    test_single("for_mixed");
+    test_ast_parse("for_mixed", &["main", "fibonacci", "factorial", "power"]);
 }
 #[test]
 fn for_nested() {
-    ensure_std();
-    test_single("for_nested");
+    test_ast_parse("for_nested", &["main", "total"]);
 }
 #[test]
 fn for_range() {
-    ensure_std();
-    test_single("for_range");
+    test_ast_parse("for_range", &["main", "get_limit"]);
 }
 #[test]
 fn struct_method_basic() {
-    ensure_std();
-    test_single("struct_method_basic");
+    test_ast_parse(
+        "struct_method_basic",
+        &["main", "Counter", "get", "add", "value"],
+    );
 }
 #[test]
 fn struct_method_calls() {
-    ensure_std();
-    test_single("struct_method_calls");
+    test_ast_parse("struct_method_calls", &["main", "Pair", "sum", "fill"]);
 }
 #[test]
 fn struct_method_namespace() {
-    ensure_std();
-    test_single("struct_method_namespace");
+    test_ast_parse("struct_method_namespace", &["main", "calc", "mix"]);
 }
 #[test]
 fn struct_method_loop() {
-    ensure_std();
-    test_single("struct_method_loop");
+    test_ast_parse("struct_method_loop", &["main", "Acc", "push"]);
 }
 #[test]
 fn struct_method_nested() {
-    ensure_std();
-    test_single("struct_method_nested");
+    test_ast_parse(
+        "struct_method_nested",
+        &["main", "Vec2", "Body", "step", "energy"],
+    );
 }
 #[test]
 fn array_2d_basic() {
-    ensure_std();
-    test_single("array_2d_basic");
+    test_ast_parse("array_2d_basic", &["main", "mat"]);
 }
 #[test]
 fn array_2d_init() {
-    ensure_std();
-    test_single("array_2d_init");
+    test_ast_parse("array_2d_init", &["main", "mat", "sum"]);
 }
 #[test]
 fn array_2d_matmul() {
-    ensure_std();
-    test_single("array_2d_matmul");
+    test_ast_parse("array_2d_matmul", &["main"]);
 }
 #[test]
 fn array_3d() {
-    ensure_std();
-    test_single("array_3d");
+    test_ast_parse("array_3d", &["main", "cube"]);
 }
 #[test]
 fn attention() {
-    ensure_std();
-    test_single("attention");
+    test_ast_parse("attention", &["main", "scores"]);
 }

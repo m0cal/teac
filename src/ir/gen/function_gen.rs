@@ -163,6 +163,11 @@ impl<'ir> FunctionGenerator<'ir> {
             (ast::VarDeclInner::Scalar, Some(Dtype::I32)) => {
                 Ok(LocalStoragePlan::Alloca(Dtype::I32))
             }
+            (ast::VarDeclInner::Scalar, Some(Dtype::Struct { type_name })) => {
+                Ok(LocalStoragePlan::Alloca(Dtype::Struct {
+                    type_name: type_name.clone(),
+                }))
+            }
             (ast::VarDeclInner::Array(arr), None | Some(Dtype::I32)) => Ok(
                 LocalStoragePlan::Alloca(Dtype::array_of(Dtype::I32, arr.len)),
             ),
@@ -182,6 +187,9 @@ impl<'ir> FunctionGenerator<'ir> {
         match dtype.as_ref() {
             None => Ok(LocalStoragePlan::Deferred),
             Some(Dtype::I32) => Ok(LocalStoragePlan::Alloca(Dtype::I32)),
+            Some(Dtype::Struct { type_name }) => Ok(LocalStoragePlan::Alloca(Dtype::Struct {
+                type_name: type_name.clone(),
+            })),
             _ => Err(Error::LocalVarDefinitionUnsupported),
         }
     }

@@ -100,19 +100,17 @@ Examples: `i32`, `Node`, `&[i32]`
 
 ### Variable Declarations
 
-Variable declarations are categorized into four forms:
+Variable declarations are categorized into three forms:
 
 ```
 scalar_decl       := identifier                                             // scalar without type
 typed_scalar_decl := identifier < : > typeSpec                             // scalar with type
-array_decl        := identifier < [ > num < ] >                            // array without type
 typed_array_decl  := identifier < : > < [ > typeSpec < ; > num < ] >       // array with type and size
 ```
 
 ```
 varDecl := typed_array_decl
          | typed_scalar_decl
-         | array_decl
          | scalar_decl
 ```
 
@@ -123,7 +121,6 @@ Examples:
 n:i32                    // typed_scalar_decl
 count                    // scalar_decl
 arr: [i32; 100]         // typed_array_decl
-que[1005]               // array_decl
 buf: &[i32]             // typed_scalar_decl with reference type (parameter only)
 ```
 
@@ -137,7 +134,6 @@ varDeclStmt := < let > varDef < ; >
 
 varDef := typed_array_decl  < = > arrayInitializer   // typed array with initializer
         | typed_scalar_decl < = > rightVal            // typed scalar with initializer
-        | array_decl        < = > arrayInitializer    // untyped array with initializer
         | scalar_decl       < = > rightVal            // scalar with initializer (type inferred)
 
 arrayInitializer := < [ > rightValList < ] >          // explicit list: [1, 2, 3]
@@ -152,8 +148,6 @@ let n:i32;                              // declare typed scalar
 let x:i32 = 0;                          // declare and initialize typed scalar
 let arr: [i32; 3] = [1, 2, 3];         // declare and initialize typed array (explicit list)
 let buf: [i32; 5] = [0; 5];            // declare and initialize typed array (fill syntax)
-let que[3] = [1, 2, 3];               // declare and initialize untyped array (explicit list)
-let que[5] = [0; 5];                  // declare and initialize untyped array (fill syntax)
 let count = 0;                          // type inference scalar
 ```
 
@@ -598,7 +592,6 @@ fn main() -> i32 {
 6. **Variable Declaration Forms**:
    - `scalar_decl` — `name` (no type)
    - `typed_scalar_decl` — `name: type` (includes `name: &[type]` for reference parameters)
-   - `array_decl` — `name[size]` (no type)
    - `typed_array_decl` — `name: [type; size]`
 7. **Module System**: Module paths support multiple levels separated by `::` (e.g., `use a::b::c;`). Functions from external modules are called using the full module path as prefix (e.g., `a::b::fn_name(...)`).
 8. **No Implicit Conversions**: All type conversions must be explicit.

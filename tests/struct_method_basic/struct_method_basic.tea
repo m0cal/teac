@@ -16,8 +16,8 @@ impl Counter {
 
     fn add_twice(&mut self, delta: i32) -> i32 {
         self.add(delta);
-        Self::add(delta);
-        return Self::get();
+        Self::add(self, delta);
+        return Self::get(self);
     }
 }
 
