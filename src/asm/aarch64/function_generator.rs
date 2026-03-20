@@ -2,6 +2,7 @@ use super::inst::Inst;
 use super::types::{dtype_to_regsize, Addr, BinOp, Cond, IndexOperand, Operand, RegSize, Register};
 use crate::asm::common::{align_up, StackFrame, StackSlot, StructLayouts};
 use crate::asm::error::Error;
+use crate::common::Target;
 use crate::ir;
 use std::collections::HashMap;
 
@@ -9,12 +10,13 @@ fn mangle_bb(func: &str, bb: usize) -> String {
     format!(".L{func}_bb{bb}")
 }
 
-fn lower_link_symbol(ir_name: &str) -> String {
-    if let Some(stripped) = ir_name.strip_prefix("std::") {
+fn lower_link_symbol(ir_name: &str, target: Target) -> String {
+    let base = if let Some(stripped) = ir_name.strip_prefix("std::") {
         stripped.to_string()
     } else {
         ir_name.replace("::", "__")
-    }
+    };
+    target.mangle_symbol(&base)
 }
 
 #[derive(Debug, Clone)]
@@ -28,6 +30,7 @@ pub struct FunctionGenerator<'a> {
     pub func_id: &'a str,
     pub frame: &'a StackFrame,
     pub layouts: &'a StructLayouts,
+    pub target: Target,
     pub insts: &'a mut Vec<Inst>,
     pub next_vreg: &'a mut usize,
     pub cond_map: &'a mut HashMap<usize, Cond>,
@@ -187,7 +190,7 @@ impl<'a> FunctionGenerator<'a> {
             self.emit_call_reg_arg(arg, i as u8)?;
         }
 
-        let func_name = lower_link_symbol(&s.func_name);
+        let func_name = lower_link_symbol(&s.func_name, self.target);
         self.insts.push(Inst::Bl { func: func_name });
 
         if nargs > 8 {
@@ -564,8 +567,9 @@ impl<'a> FunctionGenerator<'a> {
                     dtype: l.dtype.clone(),
                 })
             }
-            // Global variables are referenced by their symbol name.
-            ir::Operand::Global(g) => Ok((PtrBase::Global(g.identifier.clone()), None)),
+            ir::Operand::Global(g) => {
+                Ok((PtrBase::Global(self.target.mangle_symbol(&g.identifier)), None))
+            }
             ir::Operand::Integer(_) => Err(Error::UnsupportedOperand {
                 what: format!("unsupported pointer operand: {}", val),
             }),

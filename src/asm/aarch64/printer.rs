@@ -3,6 +3,7 @@ use std::io::Write;
 use super::inst::Inst;
 use super::types::{Addr, BinOp, Cond, IndexOperand, Operand, RegSize, Register};
 use crate::asm::error::Error;
+use crate::common::Target;
 
 const SCRATCH0: u8 = 16;
 const SCRATCH1: u8 = 17;
@@ -38,11 +39,12 @@ pub trait AsmPrint {
 
 pub struct AsmPrinter<W: Write> {
     writer: W,
+    target: Target,
 }
 
 impl<W: Write> AsmPrinter<W> {
-    pub fn new(writer: W) -> Self {
-        Self { writer }
+    pub fn new(writer: W, target: Target) -> Self {
+        Self { writer, target }
     }
 
     fn reg_name(&self, r: Register, size: RegSize) -> String {
@@ -425,8 +427,16 @@ impl<W: Write> AsmPrinter<W> {
 
     fn emit_adrp_add(&mut self, dst: Register, sym: &str) -> Result<(), Error> {
         let dst_s = self.reg_name(dst, RegSize::X64);
-        writeln!(self.writer, "\tadrp {dst_s}, {sym}")?;
-        writeln!(self.writer, "\tadd  {dst_s}, {dst_s}, :lo12:{sym}")?;
+        match self.target {
+            Target::Macos => {
+                writeln!(self.writer, "\tadrp {dst_s}, {sym}@PAGE")?;
+                writeln!(self.writer, "\tadd  {dst_s}, {dst_s}, {sym}@PAGEOFF")?;
+            }
+            Target::Linux => {
+                writeln!(self.writer, "\tadrp {dst_s}, {sym}")?;
+                writeln!(self.writer, "\tadd  {dst_s}, {dst_s}, :lo12:{sym}")?;
+            }
+        }
         Ok(())
     }
 

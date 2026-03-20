@@ -1,5 +1,6 @@
 // Integration tests for the TeaLang compiler.
-// Supports: Native AArch64 Linux, x86/x86_64 Linux (cross-compile + QEMU), macOS (Docker).
+// Supports: Native AArch64 Linux, x86/x86_64 Linux (cross-compile + QEMU),
+//           macOS AArch64 (native), macOS x86_64 (Docker).
 
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, Read, Write};
@@ -9,8 +10,12 @@ use std::sync::Once;
 
 static INIT: Once = Once::new();
 
-fn is_macos() -> bool {
-    cfg!(target_os = "macos")
+fn is_native_macos() -> bool {
+    cfg!(all(target_os = "macos", target_arch = "aarch64"))
+}
+
+fn is_docker_macos() -> bool {
+    cfg!(all(target_os = "macos", not(target_arch = "aarch64")))
 }
 
 fn is_cross_linux() -> bool {
@@ -31,7 +36,14 @@ fn command_exists(cmd: &str) -> bool {
 }
 
 fn ensure_cross_tools() {
-    if is_macos() {
+    if is_native_macos() {
+        if !command_exists("cc") {
+            panic!(
+                "✗ cc not found.\n\
+                 Please install Xcode Command Line Tools: xcode-select --install"
+            );
+        }
+    } else if is_docker_macos() {
         if !command_exists("docker") {
             panic!(
                 "✗ Docker not found.\n\
@@ -70,11 +82,32 @@ fn ensure_cross_tools() {
 fn get_std_o_path() -> PathBuf {
     let project_root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let std_dir = project_root.join("tests").join("std");
-    if is_macos() || is_cross_linux() {
+    if is_native_macos() {
+        std_dir.join("std-macos.o")
+    } else if is_docker_macos() || is_cross_linux() {
         std_dir.join("std-linux.o")
     } else {
         std_dir.join("std.o")
     }
+}
+
+fn compile_std_native_macos(std_dir: &Path, o_path: &Path) {
+    let status = Command::new("cc")
+        .arg("-c")
+        .arg("std.c")
+        .arg("-o")
+        .arg(o_path)
+        .current_dir(std_dir)
+        .status()
+        .expect("Failed to execute cc");
+
+    assert!(
+        status.success(),
+        "✗ cc failed to build {} (exit {}). Ran in {}",
+        o_path.display(),
+        status.code().unwrap_or(-1),
+        std_dir.display()
+    );
 }
 
 fn compile_std_in_docker(std_dir: &Path, o_path: &Path) {
@@ -145,7 +178,9 @@ fn ensure_std() {
         };
 
         if needs_build {
-            if is_macos() {
+            if is_native_macos() {
+                compile_std_native_macos(&std_dir, &o_path);
+            } else if is_docker_macos() {
                 compile_std_in_docker(&std_dir, &o_path);
             } else if is_cross_linux() {
                 compile_std_cross_linux(&std_dir, &o_path);
@@ -179,13 +214,18 @@ fn ensure_std() {
 #[inline(always)]
 fn launch(dir: &PathBuf, input_file: &str, output_file: &str) -> Output {
     let tool = Path::new(env!("CARGO_BIN_EXE_teac"));
-    Command::new(tool)
-        .arg(input_file)
+    let mut cmd = Command::new(tool);
+    cmd.arg(input_file)
         .arg("--emit")
         .arg("asm")
         .arg("-o")
-        .arg(output_file)
-        .current_dir(dir)
+        .arg(output_file);
+
+    if is_docker_macos() {
+        cmd.arg("--target").arg("linux");
+    }
+
+    cmd.current_dir(dir)
         .output()
         .expect("Failed to execute teac")
 }
@@ -364,6 +404,25 @@ fn run_with_qemu(exe: &Path, input: Option<&Path>) -> io::Result<(i32, Vec<u8>, 
     }
 }
 
+fn link_native_macos(
+    build_dir: &Path,
+    asm_path: &Path,
+    std_o: &Path,
+    exe_path: &Path,
+) -> io::Result<(i32, Vec<u8>)> {
+    let output = Command::new("cc")
+        .arg(asm_path)
+        .arg(std_o)
+        .arg("-o")
+        .arg(exe_path)
+        .current_dir(build_dir)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .output()?;
+
+    Ok((output.status.code().unwrap_or(-1), output.stderr))
+}
+
 fn link_native(
     build_dir: &Path,
     asm_path: &Path,
@@ -520,8 +579,17 @@ fn test_single(test_name: &str) {
         None
     };
 
-    let (run_code, run_stdout, run_stderr) = if is_macos() {
-        // Use Docker for linking and running on macOS
+    let (run_code, run_stdout, run_stderr) = if is_native_macos() {
+        let exe = out_dir.join(test_name);
+        let (link_code, link_err) =
+            link_native_macos(&out_dir, &output_path, &stdlib, &exe).expect("Failed to link");
+        assert!(
+            link_code == 0,
+            "✗ Linking failed (exit {link_code}). Stderr:\n{}",
+            String::from_utf8_lossy(&link_err)
+        );
+        run_native(&exe, input_path).expect("Failed to run executable")
+    } else if is_docker_macos() {
         link_and_run_in_docker(&out_dir, &output_name, &stdlib, test_name, input_path)
             .expect("Failed to run in Docker")
     } else if is_cross_linux() {

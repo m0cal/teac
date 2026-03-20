@@ -7,7 +7,7 @@ mod parser;
 
 use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
-use common::Generator;
+use common::{Generator, Target};
 use std::{
     fs::{self, File},
     io::{self, BufWriter, Write},
@@ -21,6 +21,12 @@ enum EmitTarget {
     Asm,
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, ValueEnum)]
+enum TargetPlatform {
+    Linux,
+    Macos,
+}
+
 #[derive(Parser, Debug)]
 #[command(name = "teac")]
 #[command(about = "A compiler written in Rust for TeaLang")]
@@ -30,6 +36,9 @@ struct Cli {
 
     #[arg(long, value_enum, ignore_case = true, default_value = "asm")]
     emit: EmitTarget,
+
+    #[arg(long, value_enum, ignore_case = true)]
+    target: Option<TargetPlatform>,
 
     #[clap(short, long, value_name = "FILE")]
     output: Option<String>,
@@ -84,7 +93,13 @@ fn run() -> Result<()> {
             .context("failed to write IR output");
     }
 
-    let mut asm_gen = asm::AArch64AsmGenerator::new(&ir_gen.module, &ir_gen.registry);
+    let target = match cli.target {
+        Some(TargetPlatform::Linux) => Target::Linux,
+        Some(TargetPlatform::Macos) => Target::Macos,
+        None => Target::host(),
+    };
+
+    let mut asm_gen = asm::AArch64AsmGenerator::new(&ir_gen.module, &ir_gen.registry, target);
     asm_gen.generate().context("failed to generate assembly")?;
     asm_gen
         .output(&mut writer)

@@ -10,7 +10,7 @@ pub use types::{Addr, BinOp, Cond, Operand, Register};
 
 use crate::asm::common::{StackFrame, StructLayouts};
 use crate::asm::error::Error;
-use crate::common::Generator;
+use crate::common::{Generator, Target};
 use crate::ir;
 use function_generator::FunctionGenerator;
 use printer::{AsmPrint, AsmPrinter};
@@ -35,26 +35,29 @@ struct GeneratedFunction {
     insts: Vec<Inst>,
 }
 
-fn lower_link_symbol(ir_name: &str) -> String {
-    if let Some(stripped) = ir_name.strip_prefix("std::") {
+fn lower_link_symbol(ir_name: &str, target: Target) -> String {
+    let base = if let Some(stripped) = ir_name.strip_prefix("std::") {
         stripped.to_string()
     } else {
         ir_name.replace("::", "__")
-    }
+    };
+    target.mangle_symbol(&base)
 }
 
 pub struct AArch64AsmGenerator<'a> {
     module: &'a ir::Module,
     registry: &'a ir::Registry,
+    target: Target,
     globals: Vec<GeneratedGlobal>,
     functions: Vec<GeneratedFunction>,
 }
 
 impl<'a> AArch64AsmGenerator<'a> {
-    pub fn new(module: &'a ir::Module, registry: &'a ir::Registry) -> Self {
+    pub fn new(module: &'a ir::Module, registry: &'a ir::Registry, target: Target) -> Self {
         Self {
             module,
             registry,
+            target,
             globals: Vec::new(),
             functions: Vec::new(),
         }
@@ -69,19 +72,21 @@ impl<'a> Generator for AArch64AsmGenerator<'a> {
 
         self.globals.clear();
         for g in self.module.global_list.values() {
-            self.globals.push(Self::handle_global(&layouts, g)?);
+            self.globals
+                .push(Self::handle_global(&layouts, g, self.target)?);
         }
 
         self.functions.clear();
         for func in self.module.function_list.values() {
-            self.functions.push(Self::handle_function(&layouts, func)?);
+            self.functions
+                .push(Self::handle_function(&layouts, func, self.target)?);
         }
 
         Ok(())
     }
 
     fn output<W: Write>(&self, w: &mut W) -> Result<(), Error> {
-        let mut printer = AsmPrinter::new(w);
+        let mut printer = AsmPrinter::new(w, self.target);
 
         if !self.globals.is_empty() {
             printer.emit_section("data")?;
@@ -156,8 +161,9 @@ impl<'a> AArch64AsmGenerator<'a> {
     fn handle_global(
         layouts: &StructLayouts,
         g: &ir::GlobalVariable,
+        target: Target,
     ) -> Result<GeneratedGlobal, Error> {
-        let symbol = g.identifier.clone();
+        let symbol = target.mangle_symbol(&g.identifier);
 
         let data = match &g.dtype {
             ir::Dtype::I32 => {
@@ -200,8 +206,9 @@ impl<'a> AArch64AsmGenerator<'a> {
     fn handle_function(
         layouts: &StructLayouts,
         func: &ir::Function,
+        target: Target,
     ) -> Result<GeneratedFunction, Error> {
-        let symbol = lower_link_symbol(&func.identifier);
+        let symbol = lower_link_symbol(&func.identifier, target);
         let Some(blocks) = func.blocks.as_ref() else {
             return Ok(GeneratedFunction {
                 symbol,
@@ -220,6 +227,7 @@ impl<'a> AArch64AsmGenerator<'a> {
                 func_id: &symbol,
                 frame: &frame,
                 layouts,
+                target,
                 insts: &mut insts,
                 next_vreg: &mut next_vreg,
                 cond_map: &mut cond_map,
