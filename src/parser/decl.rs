@@ -1,7 +1,7 @@
 use crate::ast;
 
+use super::common::{get_pos, grammar_error, parse_num, Pair, ParseResult, Rule};
 use super::ParseContext;
-use super::common::{ParseResult, Pair, Rule, get_pos, grammar_error, parse_num};
 
 impl<'a> ParseContext<'a> {
     pub(crate) fn parse_use_stmt(&self, pair: Pair) -> ParseResult<ast::UseStmt> {
@@ -30,9 +30,7 @@ impl<'a> ParseContext<'a> {
                 }
                 Rule::struct_def => {
                     return Ok(Some(Box::new(ast::ProgramElement {
-                        inner: ast::ProgramElementInner::StructDef(
-                            self.parse_struct_def(inner)?,
-                        ),
+                        inner: ast::ProgramElementInner::StructDef(self.parse_struct_def(inner)?),
                     })));
                 }
                 Rule::fn_decl_stmt => {
@@ -114,10 +112,7 @@ impl<'a> ParseContext<'a> {
         }))
     }
 
-    pub(crate) fn parse_type_spec(
-        &self,
-        pair: Pair,
-    ) -> ParseResult<Option<ast::TypeSpecifier>> {
+    pub(crate) fn parse_type_spec(&self, pair: Pair) -> ParseResult<Option<ast::TypeSpecifier>> {
         let pos = get_pos(&pair);
 
         let children: Vec<_> = pair.into_inner().collect();
@@ -157,10 +152,7 @@ impl<'a> ParseContext<'a> {
         Ok(None)
     }
 
-    pub(crate) fn parse_var_decl_stmt(
-        &self,
-        pair: Pair,
-    ) -> ParseResult<Box<ast::VarDeclStmt>> {
+    pub(crate) fn parse_var_decl_stmt(&self, pair: Pair) -> ParseResult<Box<ast::VarDeclStmt>> {
         let pair_for_error = pair.clone();
         for inner in pair.into_inner() {
             match inner.as_rule() {
@@ -224,10 +216,7 @@ impl<'a> ParseContext<'a> {
             Ok(Box::new(ast::VarDef {
                 identifier,
                 type_specifier,
-                inner: ast::VarDefInner::Array(Box::new(ast::VarDefArray {
-                    len,
-                    initializer,
-                })),
+                inner: ast::VarDefInner::Array(Box::new(ast::VarDefArray { len, initializer })),
             }))
         } else {
             let type_specifier = if has_colon {
@@ -262,7 +251,10 @@ impl<'a> ParseContext<'a> {
         let pair_for_error = pair.clone();
         let children: Vec<_> = pair.into_inner().collect();
 
-        if let Some(list_pair) = children.iter().find(|p| p.as_rule() == Rule::right_val_list) {
+        if let Some(list_pair) = children
+            .iter()
+            .find(|p| p.as_rule() == Rule::right_val_list)
+        {
             let vals = self.parse_right_val_list(list_pair.clone())?;
             return Ok(ast::ArrayInitializer::ExplicitList(vals));
         }
@@ -282,10 +274,7 @@ impl<'a> ParseContext<'a> {
         Ok(ast::ArrayInitializer::Fill { val, count })
     }
 
-    pub(crate) fn parse_fn_decl_stmt(
-        &self,
-        pair: Pair,
-    ) -> ParseResult<Box<ast::FnDeclStmt>> {
+    pub(crate) fn parse_fn_decl_stmt(&self, pair: Pair) -> ParseResult<Box<ast::FnDeclStmt>> {
         let pair_for_error = pair.clone();
         for inner in pair.into_inner() {
             if inner.as_rule() == Rule::fn_decl {
@@ -345,8 +334,7 @@ impl<'a> ParseContext<'a> {
         }
 
         Ok(Box::new(ast::FnDef {
-            fn_decl: fn_decl
-                .ok_or_else(|| grammar_error("fn_def.fn_decl", &pair_for_error))?,
+            fn_decl: fn_decl.ok_or_else(|| grammar_error("fn_def.fn_decl", &pair_for_error))?,
             stmts,
         }))
     }

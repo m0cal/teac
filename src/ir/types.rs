@@ -6,9 +6,16 @@ pub enum Dtype {
     Void,
     I1,
     I32,
-    Struct { type_name: String },
-    Pointer { pointee: Box<Dtype> },
-    Array { element: Box<Dtype>, length: Option<usize> },
+    Struct {
+        type_name: String,
+    },
+    Pointer {
+        pointee: Box<Dtype>,
+    },
+    Array {
+        element: Box<Dtype>,
+        length: Option<usize>,
+    },
     Undecided,
 }
 

@@ -4,18 +4,13 @@ use super::ParseContext;
 use super::common::{ParseResult, Pair, Rule, get_pos, grammar_error};
 
 impl<'a> ParseContext<'a> {
-    pub(crate) fn parse_code_block_stmt(
-        &self,
-        pair: Pair,
-    ) -> ParseResult<Box<ast::CodeBlockStmt>> {
+    pub(crate) fn parse_code_block_stmt(&self, pair: Pair) -> ParseResult<Box<ast::CodeBlockStmt>> {
         let pair_for_error = pair.clone();
         for inner in pair.into_inner() {
             match inner.as_rule() {
                 Rule::var_decl_stmt => {
                     return Ok(Box::new(ast::CodeBlockStmt {
-                        inner: ast::CodeBlockStmtInner::VarDecl(
-                            self.parse_var_decl_stmt(inner)?,
-                        ),
+                        inner: ast::CodeBlockStmtInner::VarDecl(self.parse_var_decl_stmt(inner)?),
                     }));
                 }
                 Rule::assignment_stmt => {
@@ -42,16 +37,12 @@ impl<'a> ParseContext<'a> {
                 }
                 Rule::return_stmt => {
                     return Ok(Box::new(ast::CodeBlockStmt {
-                        inner: ast::CodeBlockStmtInner::Return(
-                            self.parse_return_stmt(inner)?,
-                        ),
+                        inner: ast::CodeBlockStmtInner::Return(self.parse_return_stmt(inner)?),
                     }));
                 }
                 Rule::continue_stmt => {
                     return Ok(Box::new(ast::CodeBlockStmt {
-                        inner: ast::CodeBlockStmtInner::Continue(Box::new(
-                            ast::ContinueStmt {},
-                        )),
+                        inner: ast::CodeBlockStmtInner::Continue(Box::new(ast::ContinueStmt {})),
                     }));
                 }
                 Rule::break_stmt => {
@@ -71,10 +62,7 @@ impl<'a> ParseContext<'a> {
         Err(grammar_error("code_block_stmt", &pair_for_error))
     }
 
-    fn parse_assignment_stmt(
-        &self,
-        pair: Pair,
-    ) -> ParseResult<Box<ast::AssignmentStmt>> {
+    fn parse_assignment_stmt(&self, pair: Pair) -> ParseResult<Box<ast::AssignmentStmt>> {
         let pair_for_error = pair.clone();
         let mut left_val = None;
         let mut right_val = None;
@@ -153,8 +141,7 @@ impl<'a> ParseContext<'a> {
         }
 
         Ok(Box::new(ast::IfStmt {
-            bool_unit: bool_unit
-                .ok_or_else(|| grammar_error("cond.bool_unit", &pair_for_error))?,
+            bool_unit: bool_unit.ok_or_else(|| grammar_error("cond.bool_unit", &pair_for_error))?,
             if_stmts,
             else_stmts,
         }))

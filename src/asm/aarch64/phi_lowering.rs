@@ -144,9 +144,11 @@ fn emit_parallel_copies(
 }
 
 fn find_ready_copy(copies: &[ParallelCopy]) -> Option<usize> {
-    copies
-        .iter()
-        .position(|copy| !copies.iter().any(|other| same_operand(&copy.dst, &other.src)))
+    copies.iter().position(|copy| {
+        !copies
+            .iter()
+            .any(|other| same_operand(&copy.dst, &other.src))
+    })
 }
 
 fn is_terminator(stmt: &Stmt) -> bool {

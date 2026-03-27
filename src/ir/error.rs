@@ -39,7 +39,9 @@ pub enum Error {
     #[error("Array parameter '{symbol}' must be passed by reference: use &[T] instead of [T; N]")]
     ArrayParameterNotAllowed { symbol: String },
 
-    #[error("Array '{symbol}' cannot be used as a value directly; use '&{symbol}' to pass by reference")]
+    #[error(
+        "Array '{symbol}' cannot be used as a value directly; use '&{symbol}' to pass by reference"
+    )]
     ArrayUsedAsValue { symbol: String },
 
     #[error("Invalid struct member expression {expr}")]

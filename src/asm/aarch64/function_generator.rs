@@ -357,7 +357,10 @@ impl<'a> FunctionGenerator<'a> {
     }
 
     fn emit_call_stack_arg(&mut self, arg: &ir::Operand, stack_offset: i64) -> Result<(), Error> {
-        if matches!(arg.dtype(), ir::Dtype::Pointer { .. } | ir::Dtype::Array { .. }) {
+        if matches!(
+            arg.dtype(),
+            ir::Dtype::Pointer { .. } | ir::Dtype::Array { .. }
+        ) {
             self.emit_ptr_to_reg(arg, Register::Physical(16))?;
             self.insts.push(Inst::Str {
                 size: RegSize::X64,
@@ -401,7 +404,10 @@ impl<'a> FunctionGenerator<'a> {
     }
 
     fn emit_call_reg_arg(&mut self, arg: &ir::Operand, reg_idx: u8) -> Result<(), Error> {
-        if matches!(arg.dtype(), ir::Dtype::Pointer { .. } | ir::Dtype::Array { .. }) {
+        if matches!(
+            arg.dtype(),
+            ir::Dtype::Pointer { .. } | ir::Dtype::Array { .. }
+        ) {
             self.emit_ptr_to_reg(arg, Register::Physical(reg_idx))?;
         } else {
             let (op, _size) = self.lower_value(arg)?;
@@ -567,9 +573,10 @@ impl<'a> FunctionGenerator<'a> {
                     dtype: l.dtype.clone(),
                 })
             }
-            ir::Operand::Global(g) => {
-                Ok((PtrBase::Global(self.target.mangle_symbol(&g.identifier)), None))
-            }
+            ir::Operand::Global(g) => Ok((
+                PtrBase::Global(self.target.mangle_symbol(&g.identifier)),
+                None,
+            )),
             ir::Operand::Integer(_) => Err(Error::UnsupportedOperand {
                 what: format!("unsupported pointer operand: {}", val),
             }),

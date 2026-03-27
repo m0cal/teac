@@ -1,7 +1,7 @@
 use crate::ast;
 
+use super::common::{get_pos, grammar_error, parse_num, Pair, ParseResult, Rule};
 use super::ParseContext;
-use super::common::{ParseResult, Pair, Rule, get_pos, grammar_error, parse_num};
 
 impl<'a> ParseContext<'a> {
     pub(crate) fn parse_right_val_list(&self, pair: Pair) -> ParseResult<Vec<ast::RightVal>> {
@@ -339,9 +339,7 @@ impl<'a> ParseContext<'a> {
         if filtered.len() == 1 && filtered[0].as_rule() == Rule::arith_expr {
             return Ok(Box::new(ast::ExprUnit {
                 pos,
-                inner: ast::ExprUnitInner::ArithExpr(
-                    self.parse_arith_expr(filtered[0].clone())?,
-                ),
+                inner: ast::ExprUnitInner::ArithExpr(self.parse_arith_expr(filtered[0].clone())?),
             }));
         }
 
