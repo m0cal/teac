@@ -413,6 +413,8 @@ impl<'ir> FunctionGenerator<'ir> {
     fn handle_expr_unit(&mut self, unit: &ast::ExprUnit) -> Result<Operand, Error> {
         let operand = match &unit.inner {
             ast::ExprUnitInner::Num(num) => Ok(Operand::from(*num)),
+            // Paimon: "How about we implement the traits ahead of us later?"
+            ast::ExprUnitInner::Float(_float) => todo!(),
             ast::ExprUnitInner::Id(id) => {
                 let op = self.lookup_variable(id)?;
                 let is_array = matches!(

@@ -1,6 +1,6 @@
 use crate::ast;
 
-use super::common::{get_pos, grammar_error, parse_num, Pair, ParseResult, Rule};
+use super::common::{get_pos, grammar_error, parse_num, parse_float, Pair, ParseResult, Rule};
 use super::ParseContext;
 
 impl<'a> ParseContext<'a> {
@@ -336,6 +336,17 @@ impl<'a> ParseContext<'a> {
             }));
         }
 
+        if filtered.len() == 2
+            && filtered[0].as_rule() == Rule::op_sub
+            && filtered[1].as_rule() == Rule::float_literal
+        {
+            let float_val = parse_float(filtered[1].clone())?;
+            return Ok(Box::new(ast::ExprUnit {
+                pos,
+                inner: ast::ExprUnitInner::Float(-float_val),
+            }));
+        }
+
         if filtered.len() == 1 && filtered[0].as_rule() == Rule::arith_expr {
             return Ok(Box::new(ast::ExprUnit {
                 pos,
@@ -355,6 +366,14 @@ impl<'a> ParseContext<'a> {
             return Ok(Box::new(ast::ExprUnit {
                 pos,
                 inner: ast::ExprUnitInner::Num(num),
+            }));
+        }
+
+        if filtered.len() == 1 && filtered[0].as_rule() == Rule::float_literal {
+            let float_val = parse_float(filtered[0].clone())?;
+            return Ok(Box::new(ast::ExprUnit {
+                pos,
+                inner: ast::ExprUnitInner::Float(float_val),
             }));
         }
 

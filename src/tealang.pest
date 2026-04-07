@@ -83,6 +83,14 @@ num = @{
     | (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*)
 }
 
+// Float literal: Numeric literal (optional) followed by a dot, and any digits
+// Examples: "3.14", ".21", "0.21"
+float_literal = @{
+    num?
+    ~ dot
+    ~ ASCII_DIGIT+
+}
+
 // Keywords (using @ for atomic rules to prevent whitespace inside)
 // Example: "let x:i32 = 0;"
 kw_let = @{ "let" ~ WHITESPACE }
@@ -104,6 +112,8 @@ kw_continue = @{ "continue" ~ &(WHITESPACE | semicolon) }
 kw_return = @{ "return" ~ &(WHITESPACE | semicolon) }
 // Example: "let count:i32 = 0;"
 kw_i32 = @{ "i32" ~ &(WHITESPACE | semicolon | comma | rparen | lbrace | rbrace | rbracket | op_assign) }
+// Example: "let pi:i32 = 3.14;"
+kw_f32 = @{ "f32" ~ &(WHITESPACE | semicolon | comma | rparen | lbrace | rbrace | rbracket | op_assign) }
 // Example: "use std;"
 kw_use = @{ "use" ~ WHITESPACE }
 
@@ -132,6 +142,7 @@ array_type = {
 type_spec = {
     ref_type
     | kw_i32
+    | kw_f32
     | identifier
     | array_type
 }
@@ -383,7 +394,9 @@ expr_unit = {
     lparen ~ arith_expr ~ rparen
     | fn_call
     | ampersand ~ identifier           // address-of: &arr produces &[T] reference from array
+    | op_sub ~ float_literal // negative float number
     | op_sub ~ num  // negative number
+    | float_literal
     | num
     | identifier ~ expr_suffix*
 }

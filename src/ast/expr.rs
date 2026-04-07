@@ -122,6 +122,7 @@ impl FnCall {
 #[derive(Debug, Clone)]
 pub enum ExprUnitInner {
     Num(i32),
+    Float(f32),
     Id(String),
     ArithExpr(Box<ArithExpr>),
     FnCall(Box<FnCall>),
