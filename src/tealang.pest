@@ -121,12 +121,19 @@ ref_type = {
     ampersand ~ lbracket ~ type_spec ~ rbracket
 }
 
+// Array type: [[type; num]; num]
+// Example: "[[i32, 4]; 5]"
+array_type = {
+    lbracket ~ type_spec ~ semicolon ~ num ~ rbracket
+}
+
 // Type specification: integer type, user-defined type, or reference type
-// Examples: "i32", "Node", "Queue", "&[i32]"
+// Examples: "i32", "Node", "Queue", "&[i32], [[i32; 4]; 5]"
 type_spec = {
     ref_type
     | kw_i32
     | identifier
+    | array_type
 }
 
 // Program structure
