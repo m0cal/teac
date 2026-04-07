@@ -12,6 +12,7 @@ fn base_dtype(type_specifier: &Option<ast::TypeSpecifier>) -> Dtype {
             length: None,
         }),
         Some(ast::TypeSpecifierInner::BuiltIn(_)) | None => Dtype::I32,
+        Some(ast::TypeSpecifierInner::Array(_, _)) => todo!(),
     }
 }
 
@@ -53,6 +54,7 @@ impl From<&ast::TypeSpecifier> for Dtype {
                 element: Box::new(Self::from(inner.as_ref())),
                 length: None,
             }),
+            ast::TypeSpecifierInner::Array(_, _) => todo!(),
         }
     }
 }

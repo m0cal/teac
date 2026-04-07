@@ -112,7 +112,7 @@ kw_continue = @{ "continue" ~ &(WHITESPACE | semicolon) }
 kw_return = @{ "return" ~ &(WHITESPACE | semicolon) }
 // Example: "let count:i32 = 0;"
 kw_i32 = @{ "i32" ~ &(WHITESPACE | semicolon | comma | rparen | lbrace | rbrace | rbracket | op_assign) }
-// Example: "let pi:i32 = 3.14;"
+// Example: "let pi:f32 = 3.14;"
 kw_f32 = @{ "f32" ~ &(WHITESPACE | semicolon | comma | rparen | lbrace | rbrace | rbracket | op_assign) }
 // Example: "use std;"
 kw_use = @{ "use" ~ WHITESPACE }
@@ -131,8 +131,8 @@ ref_type = {
     ampersand ~ lbracket ~ type_spec ~ rbracket
 }
 
-// Array type: [[type; num]; num]
-// Example: "[[i32, 4]; 5]"
+// Array type: [type; num]
+// Example: "[[i32; 4]; 5]"
 array_type = {
     lbracket ~ type_spec ~ semicolon ~ num ~ rbracket
 }

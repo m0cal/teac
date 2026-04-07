@@ -18,7 +18,7 @@ pub enum Error {
     InvalidFloat {
         literal: String,
         line: usize,
-        column:usize,
+        column: usize,
         #[source]
         source: std::num::ParseFloatError,
     },

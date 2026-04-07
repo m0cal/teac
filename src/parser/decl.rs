@@ -139,6 +139,31 @@ impl<'a> ParseContext<'a> {
                         inner: ast::TypeSpecifierInner::BuiltIn(ast::BuiltIn::Int),
                     }));
                 }
+                Rule::kw_f32 => {
+                    return Ok(Some(ast::TypeSpecifier{
+                        pos,
+                        inner: ast::TypeSpecifierInner::BuiltIn(ast::BuiltIn::Float),
+                    }));
+                }
+                Rule::array_type => {
+                    let array_children: Vec<_> = child.clone().into_inner().collect();
+                    let inner_type_spec = array_children
+                        .iter()
+                        .find(|c| c.as_rule() == Rule::type_spec)
+                        .expect("Array type_spec must have inner type_spec");
+                    let count_pair = array_children
+                        .iter()
+                        .find(|c| c.as_rule() == Rule::num)
+                        .expect("Array type_spec must have a size");
+                    let inner_ts = self
+                        .parse_type_spec(inner_type_spec.clone())?
+                        .expect("Array inner type_spec must not be empty");
+                    let size = parse_num(count_pair.clone())? as usize;
+                    return Ok(Some(ast::TypeSpecifier {
+                        pos,
+                        inner: ast::TypeSpecifierInner::Array(Box::new(inner_ts), size),
+                    }))
+                }
                 Rule::identifier => {
                     return Ok(Some(ast::TypeSpecifier {
                         pos,

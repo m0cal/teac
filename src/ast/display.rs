@@ -9,6 +9,7 @@ impl Display for BuiltIn {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         match self {
             BuiltIn::Int => write!(f, "int"),
+            BuiltIn::Float => write!(f, "float"),
         }
     }
 }
@@ -19,6 +20,7 @@ impl Display for TypeSpecifierInner {
             TypeSpecifierInner::BuiltIn(b) => write!(f, "{}", b),
             TypeSpecifierInner::Composite(name) => write!(f, "{}", name),
             TypeSpecifierInner::Reference(inner) => write!(f, "&[{}]", inner.inner),
+            TypeSpecifierInner::Array(inner, size) => write!(f, "[{};{}]", inner.inner, size),
         }
     }
 }
