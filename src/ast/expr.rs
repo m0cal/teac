@@ -47,7 +47,14 @@ pub struct ArithBiOpExpr {
 #[derive(Debug, Clone)]
 pub enum ArithExprInner {
     ArithBiOpExpr(Box<ArithBiOpExpr>),
-    ExprUnit(Box<ExprUnit>),
+    CastExpr(Box<CastExpr>),
+}
+
+#[derive(Debug, Clone)]
+pub struct CastExpr {
+    pub pos: Pos,
+    pub expr: Box<ExprUnit>,
+    pub target_type: Option<super::types::TypeSpecifier>,
 }
 
 #[derive(Debug, Clone)]

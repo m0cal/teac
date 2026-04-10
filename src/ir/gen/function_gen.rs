@@ -496,7 +496,12 @@ impl<'ir> FunctionGenerator<'ir> {
     fn handle_arith_expr(&mut self, expr: &ast::ArithExpr) -> Result<Operand, Error> {
         match &expr.inner {
             ast::ArithExprInner::ArithBiOpExpr(expr) => self.handle_arith_biop_expr(expr),
-            ast::ArithExprInner::ExprUnit(unit) => self.handle_expr_unit(unit),
+            ast::ArithExprInner::CastExpr(cast) => {
+                let operand = self.handle_expr_unit(&cast.expr)?;
+                if cast.target_type.is_some() {
+                }
+                Ok(operand)
+            }
         }
     }
 

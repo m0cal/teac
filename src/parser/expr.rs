@@ -257,20 +257,20 @@ impl<'a> ParseContext<'a> {
             return Err(grammar_error("arith_term", &pair_for_error));
         }
 
-        let first_unit = self.parse_expr_unit(inner_pairs[0].clone())?;
+        let first_cast = self.parse_cast_expr(inner_pairs[0].clone())?;
         let mut expr = Box::new(ast::ArithExpr {
-            pos: first_unit.pos,
-            inner: ast::ArithExprInner::ExprUnit(first_unit),
+            pos: first_cast.pos,
+            inner: ast::ArithExprInner::CastExpr(first_cast),
         });
 
         let mut i = 1;
         while i < inner_pairs.len() {
             if inner_pairs[i].as_rule() == Rule::arith_mul_op {
                 let op = self.parse_arith_mul_op(inner_pairs[i].clone())?;
-                let right_unit = self.parse_expr_unit(inner_pairs[i + 1].clone())?;
+                let right_cast = self.parse_cast_expr(inner_pairs[i + 1].clone())?;
                 let right = Box::new(ast::ArithExpr {
-                    pos: right_unit.pos,
-                    inner: ast::ArithExprInner::ExprUnit(right_unit),
+                    pos: right_cast.pos,
+                    inner: ast::ArithExprInner::CastExpr(right_cast),
                 });
 
                 expr = Box::new(ast::ArithExpr {
@@ -312,6 +312,31 @@ impl<'a> ParseContext<'a> {
             }
         }
         Err(grammar_error("arith_mul_op", &pair_for_error))
+    }
+
+    pub(crate) fn parse_cast_expr(&self, pair: Pair) -> ParseResult<Box<ast::CastExpr>> {
+        let pair_for_error = pair.clone();
+        let pos = get_pos(&pair);
+        let inner_pairs: Vec<_> = pair.into_inner().collect();
+
+        if inner_pairs.is_empty() {
+            return Err(grammar_error("cast_expr", &pair_for_error));
+        }
+
+        let expr = self.parse_expr_unit(inner_pairs[0].clone())?;
+        let mut target_type = None;
+
+        for inner in inner_pairs.into_iter().skip(1) {
+            if inner.as_rule() == Rule::type_spec {
+                target_type = self.parse_type_spec(inner)?;
+            }
+        }
+
+        Ok(Box::new(ast::CastExpr {
+            pos,
+            expr,
+            target_type,
+        }))
     }
 
     pub(crate) fn parse_expr_unit(&self, pair: Pair) -> ParseResult<Box<ast::ExprUnit>> {

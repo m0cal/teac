@@ -518,7 +518,30 @@ impl DisplayAsTree for ArithExpr {
         new_indent.push(is_last);
         match &self.inner {
             ArithExprInner::ArithBiOpExpr(expr) => expr.fmt_tree(f, &new_indent, true),
-            ArithExprInner::ExprUnit(unit) => unit.fmt_tree(f, &new_indent, true),
+            ArithExprInner::CastExpr(c) => c.fmt_tree(f, &new_indent, true),
+        }
+    }
+}
+
+impl DisplayAsTree for CastExpr {
+    fn fmt_tree(
+        &self,
+        f: &mut Formatter<'_>,
+        indent_levels: &[bool],
+        is_last: bool,
+    ) -> Result<(), Error> {
+        if let Some(target_type) = &self.target_type {
+            writeln!(
+                f,
+                "{}CastExpr as {:?}",
+                tree_indent(indent_levels, is_last),
+                target_type.inner
+            )?;
+            let mut new_indent = indent_levels.to_vec();
+            new_indent.push(is_last);
+            self.expr.fmt_tree(f, &new_indent, true)
+        } else {
+            self.expr.fmt_tree(f, indent_levels, is_last)
         }
     }
 }

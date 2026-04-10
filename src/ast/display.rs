@@ -83,7 +83,7 @@ impl Display for ArithExprInner {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         match self {
             ArithExprInner::ArithBiOpExpr(expr) => write!(f, "{}", expr),
-            ArithExprInner::ExprUnit(unit) => write!(f, "{}", unit),
+            ArithExprInner::CastExpr(c) => write!(f, "{}", c),
         }
     }
 }
@@ -91,6 +91,16 @@ impl Display for ArithExprInner {
 impl Display for ArithExpr {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         write!(f, "{}", self.inner)
+    }
+}
+
+impl Display for CastExpr {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        if let Some(target_type) = &self.target_type {
+            write!(f, "({} as {})", self.expr, target_type.inner)
+        } else {
+            write!(f, "{}", self.expr)
+        }
     }
 }
 
