@@ -4,21 +4,9 @@ use super::types::TypeSpecifier;
 use std::ops::Deref;
 
 #[derive(Debug, Clone)]
-pub struct VarDeclArray {
-    pub len: usize,
-}
-
-#[derive(Debug, Clone)]
-pub enum VarDeclInner {
-    Scalar,
-    Array(Box<VarDeclArray>),
-}
-
-#[derive(Debug, Clone)]
 pub struct VarDecl {
     pub identifier: String,
     pub type_specifier: Option<TypeSpecifier>,
-    pub inner: VarDeclInner,
 }
 
 pub type VarDeclList = Vec<VarDecl>;

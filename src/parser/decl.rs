@@ -99,16 +99,26 @@ impl<'a> ParseContext<'a> {
 
         let identifier =
             identifier.ok_or_else(|| grammar_error("var_decl.identifier", &pair_for_error))?;
-        let inner = if let Some(len) = array_len {
-            ast::VarDeclInner::Array(Box::new(ast::VarDeclArray { len }))
+
+        // When the grammar matched the array alternative
+        // (identifier ~ colon ~ lbracket ~ type_spec ~ semicolon ~ num ~ rbracket),
+        // wrap the inner type_specifier with the outermost Array dimension so that
+        // the full array type (e.g. [[[int;4];3];2]) lives entirely in type_specifier.
+        let type_specifier = if let Some(len) = array_len {
+            let inner_ts = type_specifier
+                .expect("array var_decl must have a type_specifier");
+            let pos = inner_ts.pos;
+            Some(ast::TypeSpecifier {
+                pos,
+                inner: ast::TypeSpecifierInner::Array(Box::new(inner_ts), len),
+            })
         } else {
-            ast::VarDeclInner::Scalar
+            type_specifier
         };
 
         Ok(Box::new(ast::VarDecl {
             identifier,
             type_specifier,
-            inner,
         }))
     }
 
@@ -138,6 +148,31 @@ impl<'a> ParseContext<'a> {
                         pos,
                         inner: ast::TypeSpecifierInner::BuiltIn(ast::BuiltIn::Int),
                     }));
+                }
+                Rule::kw_f32 => {
+                    return Ok(Some(ast::TypeSpecifier{
+                        pos,
+                        inner: ast::TypeSpecifierInner::BuiltIn(ast::BuiltIn::Float),
+                    }));
+                }
+                Rule::array_type => {
+                    let array_children: Vec<_> = child.clone().into_inner().collect();
+                    let inner_type_spec = array_children
+                        .iter()
+                        .find(|c| c.as_rule() == Rule::type_spec)
+                        .expect("Array type_spec must have inner type_spec");
+                    let count_pair = array_children
+                        .iter()
+                        .find(|c| c.as_rule() == Rule::num)
+                        .expect("Array type_spec must have a size");
+                    let inner_ts = self
+                        .parse_type_spec(inner_type_spec.clone())?
+                        .expect("Array inner type_spec must not be empty");
+                    let size = parse_num(count_pair.clone())? as usize;
+                    return Ok(Some(ast::TypeSpecifier {
+                        pos,
+                        inner: ast::TypeSpecifierInner::Array(Box::new(inner_ts), size),
+                    }))
                 }
                 Rule::identifier => {
                     return Ok(Some(ast::TypeSpecifier {
@@ -201,6 +236,17 @@ impl<'a> ParseContext<'a> {
                         .ok_or_else(|| grammar_error("var_def.type_spec", &pair_for_error))?
                         .clone(),
                 )?
+            } else {
+                None
+            };
+
+            // Wrap with outermost Array dimension, same as in parse_var_decl
+            let type_specifier = if let Some(inner_ts) = type_specifier {
+                let pos = inner_ts.pos;
+                Some(ast::TypeSpecifier {
+                    pos,
+                    inner: ast::TypeSpecifierInner::Array(Box::new(inner_ts), len),
+                })
             } else {
                 None
             };

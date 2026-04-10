@@ -158,26 +158,10 @@ impl<'ir> FunctionGenerator<'ir> {
 
     fn plan_local_decl_storage(decl: &ast::VarDecl) -> Result<LocalStoragePlan, Error> {
         let dtype = decl.type_specifier.as_ref().map(Dtype::from);
-        match (&decl.inner, dtype.as_ref()) {
-            (ast::VarDeclInner::Scalar, None) => Ok(LocalStoragePlan::Deferred),
-            (ast::VarDeclInner::Scalar, Some(Dtype::I32)) => {
-                Ok(LocalStoragePlan::Alloca(Dtype::I32))
-            }
-            (ast::VarDeclInner::Scalar, Some(Dtype::Struct { type_name })) => {
-                Ok(LocalStoragePlan::Alloca(Dtype::Struct {
-                    type_name: type_name.clone(),
-                }))
-            }
-            (ast::VarDeclInner::Array(arr), None | Some(Dtype::I32)) => Ok(
-                LocalStoragePlan::Alloca(Dtype::array_of(Dtype::I32, arr.len)),
-            ),
-            (ast::VarDeclInner::Array(arr), Some(Dtype::Struct { type_name })) => {
-                Ok(LocalStoragePlan::Alloca(Dtype::array_of(
-                    Dtype::Struct {
-                        type_name: type_name.clone(),
-                    },
-                    arr.len,
-                )))
+        match dtype {
+            None => Ok(LocalStoragePlan::Deferred),
+            Some(dtype @ (Dtype::I32 | Dtype::Struct { .. } | Dtype::Array { .. })) => {
+                Ok(LocalStoragePlan::Alloca(dtype))
             }
             _ => Err(Error::LocalVarDefinitionUnsupported),
         }
@@ -196,7 +180,9 @@ impl<'ir> FunctionGenerator<'ir> {
 
     fn plan_local_array_def_storage(dtype: &Option<Dtype>, len: usize) -> Result<Dtype, Error> {
         match dtype.as_ref() {
-            None | Some(Dtype::I32) => Ok(Dtype::array_of(Dtype::I32, len)),
+            None => Ok(Dtype::array_of(Dtype::I32, len)),
+            Some(Dtype::I32) => Ok(Dtype::array_of(Dtype::I32, len)),
+            Some(arr @ Dtype::Array { .. }) => Ok(arr.clone()),
             _ => Err(Error::LocalVarDefinitionUnsupported),
         }
     }
@@ -413,6 +399,8 @@ impl<'ir> FunctionGenerator<'ir> {
     fn handle_expr_unit(&mut self, unit: &ast::ExprUnit) -> Result<Operand, Error> {
         let operand = match &unit.inner {
             ast::ExprUnitInner::Num(num) => Ok(Operand::from(*num)),
+            // Paimon: "How about we implement the traits ahead of us later?"
+            ast::ExprUnitInner::Float(float) => todo!(),
             ast::ExprUnitInner::Id(id) => {
                 let op = self.lookup_variable(id)?;
                 let is_array = matches!(
@@ -508,7 +496,12 @@ impl<'ir> FunctionGenerator<'ir> {
     fn handle_arith_expr(&mut self, expr: &ast::ArithExpr) -> Result<Operand, Error> {
         match &expr.inner {
             ast::ArithExprInner::ArithBiOpExpr(expr) => self.handle_arith_biop_expr(expr),
-            ast::ArithExprInner::ExprUnit(unit) => self.handle_expr_unit(unit),
+            ast::ArithExprInner::CastExpr(cast) => {
+                let operand = self.handle_expr_unit(&cast.expr)?;
+                if cast.target_type.is_some() {
+                }
+                Ok(operand)
+            }
         }
     }
 

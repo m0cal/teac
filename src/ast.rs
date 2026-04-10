@@ -13,7 +13,7 @@ pub use ops::{ArithBiOp, BoolBiOp, BoolUOp, ComOp};
 
 pub use expr::{
     ArithBiOpExpr, ArithExpr, ArithExprInner, ArrayExpr, BoolBiOpExpr, BoolExpr, BoolExprInner,
-    BoolUOpExpr, BoolUnit, BoolUnitInner, ComExpr, ExprUnit, ExprUnitInner, FnCall, IndexExpr,
+    BoolUOpExpr, BoolUnit, BoolUnitInner, CastExpr, ComExpr, ExprUnit, ExprUnitInner, FnCall, IndexExpr,
     IndexExprInner, LeftVal, LeftValInner, MemberExpr, RightVal, RightValInner, RightValList,
 };
 
@@ -23,8 +23,8 @@ pub use stmt::{
 };
 
 pub use decl::{
-    ArrayInitializer, FnDecl, FnDeclStmt, FnDef, ParamDecl, StructDef, VarDecl, VarDeclArray,
-    VarDeclInner, VarDeclStmt, VarDeclStmtInner, VarDef, VarDefArray, VarDefInner, VarDefScalar,
+    ArrayInitializer, FnDecl, FnDeclStmt, FnDef, ParamDecl, StructDef, VarDecl,
+    VarDeclStmt, VarDeclStmtInner, VarDef, VarDefArray, VarDefInner, VarDefScalar,
 };
 
 pub use program::{Program, ProgramElement, ProgramElementInner, UseStmt};

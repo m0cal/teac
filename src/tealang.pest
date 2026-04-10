@@ -83,6 +83,14 @@ num = @{
     | (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*)
 }
 
+// Float literal: Numeric literal (optional) followed by a dot, and any digits
+// Examples: "3.14", ".21", "0.21"
+float_literal = @{
+    num?
+    ~ dot
+    ~ ASCII_DIGIT+
+}
+
 // Keywords (using @ for atomic rules to prevent whitespace inside)
 // Example: "let x:i32 = 0;"
 kw_let = @{ "let" ~ WHITESPACE }
@@ -104,6 +112,10 @@ kw_continue = @{ "continue" ~ &(WHITESPACE | semicolon) }
 kw_return = @{ "return" ~ &(WHITESPACE | semicolon) }
 // Example: "let count:i32 = 0;"
 kw_i32 = @{ "i32" ~ &(WHITESPACE | semicolon | comma | rparen | lbrace | rbrace | rbracket | op_assign) }
+// Example: "let pi:f32 = 3.14;"
+kw_f32 = @{ "f32" ~ &(WHITESPACE | semicolon | comma | rparen | lbrace | rbrace | rbracket | op_assign) }
+// Example: "let f:f32 = x as f32;"
+kw_as = @{ "as" ~ WHITESPACE }
 // Example: "use std;"
 kw_use = @{ "use" ~ WHITESPACE }
 
@@ -121,12 +133,20 @@ ref_type = {
     ampersand ~ lbracket ~ type_spec ~ rbracket
 }
 
+// Array type: [type; num]
+// Example: "[[i32; 4]; 5]"
+array_type = {
+    lbracket ~ type_spec ~ semicolon ~ num ~ rbracket
+}
+
 // Type specification: integer type, user-defined type, or reference type
-// Examples: "i32", "Node", "Queue", "&[i32]"
+// Examples: "i32", "Node", "Queue", "&[i32]", "[[i32; 4]; 5]"
 type_spec = {
     ref_type
     | kw_i32
+    | kw_f32
     | identifier
+    | array_type
 }
 
 // Program structure
@@ -359,7 +379,13 @@ arith_expr = {
 // Arithmetic term: multiplication and division (higher precedence)
 // Examples: "x * 10", "num / base", "a * b / c"
 arith_term = {
-    expr_unit ~ (arith_mul_op ~ expr_unit)*
+    cast_expr ~ (arith_mul_op ~ cast_expr)*
+}
+
+// Cast expression
+// Example: "x as f32"
+cast_expr = {
+    expr_unit ~ (kw_as ~ type_spec)?
 }
 
 // Addition and subtraction operators
@@ -376,7 +402,9 @@ expr_unit = {
     lparen ~ arith_expr ~ rparen
     | fn_call
     | ampersand ~ identifier           // address-of: &arr produces &[T] reference from array
+    | op_sub ~ float_literal // negative float number
     | op_sub ~ num  // negative number
+    | float_literal
     | num
     | identifier ~ expr_suffix*
 }
