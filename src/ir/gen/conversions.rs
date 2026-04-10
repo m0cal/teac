@@ -12,7 +12,10 @@ fn base_dtype(type_specifier: &Option<ast::TypeSpecifier>) -> Dtype {
             length: None,
         }),
         Some(ast::TypeSpecifierInner::BuiltIn(_)) | None => Dtype::I32,
-        Some(ast::TypeSpecifierInner::Array(_, _)) => todo!(),
+        Some(ast::TypeSpecifierInner::Array(inner, size)) => {
+            let elem = base_dtype(&Some(inner.as_ref().clone()));
+            Dtype::array_of(elem, *size)
+        }
     }
 }
 
@@ -54,7 +57,10 @@ impl From<&ast::TypeSpecifier> for Dtype {
                 element: Box::new(Self::from(inner.as_ref())),
                 length: None,
             }),
-            ast::TypeSpecifierInner::Array(_, _) => todo!(),
+            ast::TypeSpecifierInner::Array(inner, size) => {
+                let elem = Self::from(inner.as_ref());
+                Dtype::array_of(elem, *size)
+            }
         }
     }
 }
@@ -63,11 +69,7 @@ impl TryFrom<&ast::VarDecl> for Dtype {
     type Error = crate::ir::Error;
 
     fn try_from(decl: &ast::VarDecl) -> Result<Self, Self::Error> {
-        let base_dtype = base_dtype(&decl.type_specifier);
-        match &decl.inner {
-            ast::VarDeclInner::Array(decl) => Ok(Dtype::array_of(base_dtype, decl.len)),
-            ast::VarDeclInner::Scalar => Ok(base_dtype),
-        }
+        Ok(base_dtype(&decl.type_specifier))
     }
 }
 
@@ -75,14 +77,11 @@ impl TryFrom<&ast::VarDef> for Dtype {
     type Error = crate::ir::Error;
 
     fn try_from(def: &ast::VarDef) -> Result<Self, Self::Error> {
-        if let Dtype::Struct { .. } = &base_dtype(&def.type_specifier) {
+        let dtype = base_dtype(&def.type_specifier);
+        if let Dtype::Struct { .. } = &dtype {
             return Err(crate::ir::Error::StructInitialization);
         }
-        let base_dtype = base_dtype(&def.type_specifier);
-        match &def.inner {
-            ast::VarDefInner::Array(def) => Ok(Dtype::array_of(base_dtype, def.len)),
-            ast::VarDefInner::Scalar(_) => Ok(base_dtype),
-        }
+        Ok(dtype)
     }
 }
 

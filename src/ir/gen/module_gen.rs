@@ -357,10 +357,7 @@ impl<'a> IrGenerator<'a> {
                 decl.identifier.clone(),
                 StructMember {
                     offset: offset as i32,
-                    dtype: match &decl.inner {
-                        ast::VarDeclInner::Scalar => base_dtype,
-                        ast::VarDeclInner::Array(array) => Dtype::array_of(base_dtype, array.len),
-                    },
+                    dtype: Dtype::try_from(decl)?,
                 },
             ));
         }
